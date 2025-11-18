@@ -1,5 +1,5 @@
 import logo from './../assets/img/sinfondo.png'
-import frame from './../assets/img/frame.png'
+import frame from './../assets/img/Frame.png'
 
 function Footer() {
 

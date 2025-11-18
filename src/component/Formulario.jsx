@@ -4,7 +4,7 @@ import sanitas from './../assets/img/sanitas.png'
 import sonrisa from './../assets/img/sonrisa.png'
 import Nabvar from './Nabvar'
 import Footer from './Footer'
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { es } from "date-fns/locale";
@@ -13,7 +13,6 @@ import { API_BASE_URL } from './../config/api'
 
 function Formulario() {
     const [fecha, setFecha] = useState(new Date());
-    const [ocupadas, setOcupadas] = useState([]);
 
     const [paciente, setPaciente] = useState("");
     const [telefono, setTelefono] = useState("");
@@ -25,29 +24,32 @@ function Formulario() {
 
     const ahora = new Date();
 
-    // Fetch de fechas ocupadas
-    useEffect(() => {
-        fetch(`${API_BASE_URL}/api/citas/ocupadas`)
-            .then((res) => res.json())
-            .then((data) => {
-                const fechasConvertidas = data.map((cita) => new Date(cita.fecha));
-                setOcupadas(fechasConvertidas);
-            })
-            .catch((err) => console.error(err));
-    }, []);
-
     // 🟦 ENVIAR CITA AL BACKEND
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Validar campos requeridos
         if (!paciente || !telefono || !tratamiento || !fecha) {
-            alert("Paciente, teléfono, tratamiento y fecha son requeridos");
+            alert("❌ Error: Paciente, teléfono, tratamiento y fecha son campos requeridos");
+            return;
+        }
+
+        // Validar formato de teléfono (solo números, 7-10 dígitos)
+        const telefonoLimpio = telefono.replace(/\s/g, '');
+        if (!/^\d{7,10}$/.test(telefonoLimpio)) {
+            alert("❌ Error: Formato de teléfono inválido. Debe contener entre 7 y 10 dígitos");
+            return;
+        }
+
+        // Validar email si se proporciona
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert("❌ Error: Formato de email inválido");
             return;
         }
 
         // Validar que la fecha sea futura
         if (fecha < ahora) {
-            alert("No puedes agendar citas en el pasado");
+            alert("❌ Error: No puedes agendar citas en el pasado");
             return;
         }
 
@@ -57,7 +59,7 @@ function Formulario() {
 
         const datos = {
             paciente,
-            telefono,
+            telefono: telefonoLimpio,
             email,
             tratamiento,
             fecha: fechaISO,
@@ -68,11 +70,19 @@ function Formulario() {
         };
 
         try {
+            const token = localStorage.getItem("token");
+            
+            // Verificar autenticación
+            if (!token) {
+                alert("❌ Error de autenticación: Debes iniciar sesión para agendar citas.\n\nPor favor, ve a la página de Login.");
+                return;
+            }
+
             const res = await fetch(`${API_BASE_URL}/api/citas/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("token")}` // si usas login
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify(datos),
             });
@@ -80,11 +90,20 @@ function Formulario() {
             const respuesta = await res.json();
 
             if (!res.ok) {
-                alert(respuesta.error || "Error al crear la cita");
+                // Manejar diferentes tipos de errores
+                if (res.status === 401 || res.status === 403) {
+                    alert("❌ Error de autenticación: Tu sesión ha expirado o no tienes permisos.\n\nPor favor, inicia sesión nuevamente.");
+                } else if (res.status === 409) {
+                    alert("❌ Error: Ya existe una cita para esta fecha y hora.\n\nPor favor, selecciona otro horario.");
+                } else if (res.status === 400) {
+                    alert(`❌ Error de validación: ${respuesta.error || "Datos inválidos"}\n\nVerifica los campos del formulario.`);
+                } else {
+                    alert(`❌ Error al crear la cita: ${respuesta.error || "Error desconocido"}`);
+                }
                 return;
             }
 
-            alert("Cita creada con éxito");
+            alert("✅ ¡Cita creada con éxito!\n\nRecibirás una confirmación en breve.");
             // Limpiar formulario
             setPaciente("");
             setTelefono("");
@@ -93,8 +112,9 @@ function Formulario() {
             setEps("");
             setNotas("");
             setFecha(new Date());
-        } catch (error) {
-            alert("Error al conectar con el servidor");
+        } catch (err) {
+            console.error("Error al conectar con el servidor:", err);
+            alert("❌ Error de conexión: No se pudo conectar con el servidor.\n\nVerifica tu conexión a internet e intenta nuevamente.");
         }
     };
 
