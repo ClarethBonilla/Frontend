@@ -1,0 +1,27 @@
+.fondo {
+  width: 100%;
+  background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url("./../../assets/img/diente4.png");
+;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
+.titulo {
+  color: rgb(12, 26, 157);
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 15px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.resaltado {
+  color: #ffdd00;
+  font-weight: bold;
+  font-size: 18px;
+  text-align: center;
+  margin-top: 10px;
+}

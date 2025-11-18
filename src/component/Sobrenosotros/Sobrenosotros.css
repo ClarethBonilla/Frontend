@@ -1,0 +1,71 @@
+/* Sobrenosotros */
+.parrafo-color {
+  color: #2563EB;
+}
+
+.about-section {
+  background-color: #DBEAFE;
+  padding: 30px;
+}
+
+.about-content h1 {
+  color: #0048b5;
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.about-content p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.about-content .btn {
+  padding: 10px 20px;
+  font-size: 13px;
+  background-color: #0048b5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.about-content .btn:hover {
+  background-color: #003090;
+}
+
+.about-image {
+  text-align: center;
+}
+
+.about-image img {
+  max-width: 100%;
+  height: auto;
+  max-height: 350px;
+}
+
+.installations-section {
+  padding: 30px;
+  text-align: center;
+}
+
+.installations-section h2 {
+  color: #0048b5;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.installations-image {
+  width: 100%;
+}
+
+.installations-image img {
+  max-width: 100%;
+  height: auto;
+  max-height: 450px;
+}

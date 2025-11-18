@@ -1,0 +1,186 @@
+/* Formulario */
+.formulario-container {
+  width: 100%;
+  padding: 20px;
+}
+
+.formulario-header {
+  padding: 20px;
+  text-align: center;
+}
+
+.formulario-header h1 {
+  font-size: 32px;
+  color: #0048b5;
+  margin-bottom: 12px;
+}
+
+.formulario-header p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.eps-title {
+  color: #0048b5;
+  font-weight: 700;
+  font-size: 16px;
+  margin: 15px 0 10px 0;
+  text-align: center;
+}
+
+.eps-logos {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.eps-logos img {
+  max-width: 100px;
+  height: auto;
+}
+
+.formulario-image {
+  text-align: center;
+  padding: 20px;
+}
+
+.formulario-image img {
+  max-width: 100%;
+  height: auto;
+  max-height: 300px;
+}
+
+.form-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+.form-card h5 {
+  font-size: 18px;
+  color: #0048b5;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.form-card p {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #0048b5;
+  box-shadow: 0 0 0 2px rgba(0, 72, 181, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  background-color: #0048b5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.btn-submit:hover {
+  background-color: #003090;
+}
+.calendar-container {
+  width: 350px;
+  margin: 40px auto;
+}
+
+.input-hidden {
+  width: 100%;
+  padding: 12px;
+  font-size: 18px;
+  border-radius: 12px;
+  border: none;
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  text-align: center;
+  cursor: pointer;
+}
+
+.react-datepicker {
+  border: none !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  padding: 20px;
+  border-radius: 20px;
+}
+
+.custom-calendar {
+  border-radius: 20px;
+  padding: 15px;
+}
+
+.react-datepicker__header {
+  background: #fff;
+  border-bottom: none;
+  padding: 20px 0;
+}
+
+.react-datepicker__current-month {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.react-datepicker-time__header {
+  font-size: 18px;
+}
+
+.react-datepicker__day--selected {
+  background-color: #1a73e8 !important;
+  border-radius: 10px;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: #1a73e8 !important;
+}
