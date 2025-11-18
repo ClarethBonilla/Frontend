@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./Pacientes.css";
 import Nabvar from "./Nabvar";
+import { API_BASE_URL } from "../config/api";
 
 function Pacientes() {
   const initialPatients = [
@@ -24,26 +25,53 @@ function Pacientes() {
     },
   ];
 
-  // Load from localStorage if available, otherwise use initialPatients
-  const [pacientes, setPacientes] = useState(() => {
-    try {
-      const raw = localStorage.getItem("misonrisa_pacientes");
-      return raw ? JSON.parse(raw) : initialPatients;
-    } catch (e) {
-      console.warn("Error leyendo pacientes desde localStorage", e);
-      return initialPatients;
-    }
-  });
+  const [pacientes, setPacientes] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Persist pacientes to localStorage whenever cambian
+  // Cargar pacientes desde el backend
   useEffect(() => {
+    cargarPacientes();
+  }, []);
+
+  const cargarPacientes = async () => {
     try {
-      localStorage.setItem("misonrisa_pacientes", JSON.stringify(pacientes));
-    } catch (e) {
-      console.warn("Error guardando pacientes en localStorage", e);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Debes iniciar sesión para ver pacientes");
+        setPacientes(initialPatients);
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/pacientes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setError("Sesión expirada. Por favor, inicia sesión nuevamente.");
+          setPacientes(initialPatients);
+        } else {
+          throw new Error("Error al cargar pacientes");
+        }
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      setPacientes(data.length > 0 ? data : initialPatients);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error cargando pacientes:", err);
+      setError("Error de conexión. Mostrando datos de ejemplo.");
+      setPacientes(initialPatients);
+      setLoading(false);
     }
-  }, [pacientes]);
+  };
 
   // Form state for adding a new patient
   const [newNombre, setNewNombre] = useState("");
@@ -56,16 +84,57 @@ function Pacientes() {
   const [editUltimaCita, setEditUltimaCita] = useState("");
   const [editId, setEditId] = useState("");
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
-    if (!newNombre.trim()) return; // require a name
-    setPacientes((prev) => [
-      ...prev,
-      { nombre: newNombre.trim(), ultimaCita: newUltimaCita.trim() || "-", id: newId.trim() || `#MS-${Math.floor(Math.random() * 9000) + 1000}` },
-    ]);
-    setNewNombre("");
-    setNewUltimaCita("");
-    setNewId("");
+    if (!newNombre.trim()) {
+      alert("❌ Error: El nombre es requerido");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("❌ Error de autenticación: Debes iniciar sesión para agregar pacientes.");
+        return;
+      }
+
+      const nuevoPaciente = {
+        nombre: newNombre.trim(),
+        ultimaCita: newUltimaCita.trim() || "-",
+        id: newId.trim() || `#MS-${Math.floor(Math.random() * 9000) + 1000}`,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/pacientes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(nuevoPaciente),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          alert("❌ Error de autenticación: Tu sesión ha expirado.\n\nPor favor, inicia sesión nuevamente.");
+        } else if (response.status === 409) {
+          alert("❌ Error: Ya existe un paciente con ese ID o nombre.");
+        } else {
+          alert(`❌ Error al agregar paciente: ${data.error || "Error desconocido"}`);
+        }
+        return;
+      }
+
+      alert("✅ Paciente agregado con éxito");
+      setNewNombre("");
+      setNewUltimaCita("");
+      setNewId("");
+      cargarPacientes();
+    } catch (err) {
+      console.error("Error agregando paciente:", err);
+      alert("❌ Error de conexión: No se pudo conectar con el servidor.");
+    }
   };
 
   const startEdit = (index) => {
@@ -83,23 +152,95 @@ function Pacientes() {
     setEditId("");
   };
 
-  const saveEdit = (e) => {
+  const saveEdit = async (e) => {
     e.preventDefault();
     if (editingIndex === null) return;
-    setPacientes((prev) => prev.map((p, i) => i === editingIndex ? { nombre: editNombre, ultimaCita: editUltimaCita, id: editId } : p));
-    cancelEdit();
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("❌ Error de autenticación: Debes iniciar sesión.");
+        return;
+      }
+
+      const paciente = pacientes[editingIndex];
+      const pacienteActualizado = {
+        ...paciente,
+        nombre: editNombre,
+        ultimaCita: editUltimaCita,
+        id: editId,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/pacientes/${paciente._id || paciente.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(pacienteActualizado),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        if (response.status === 401 || response.status === 403) {
+          alert("❌ Error de autenticación: Tu sesión ha expirado.");
+        } else {
+          alert(`❌ Error al actualizar paciente: ${data.error || "Error desconocido"}`);
+        }
+        return;
+      }
+
+      alert("✅ Paciente actualizado con éxito");
+      cancelEdit();
+      cargarPacientes();
+    } catch (err) {
+      console.error("Error actualizando paciente:", err);
+      alert("❌ Error de conexión: No se pudo conectar con el servidor.");
+    }
   };
 
-  const deletePatient = (index) => {
-    setPacientes((prev) => prev.filter((_, i) => i !== index));
-    // if deleting currently edited item, cancel edit
-    if (editingIndex === index) cancelEdit();
-    // adjust selectedIndex if needed
-    setSelectedIndex((prev) => {
-      if (index === prev) return null;
-      if (index < prev) return prev - 1;
-      return prev;
-    });
+  const deletePatient = async (index) => {
+    if (!confirm("¿Estás seguro de eliminar este paciente?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("❌ Error de autenticación: Debes iniciar sesión.");
+        return;
+      }
+
+      const paciente = pacientes[index];
+      const response = await fetch(`${API_BASE_URL}/api/pacientes/${paciente._id || paciente.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        if (response.status === 401 || response.status === 403) {
+          alert("❌ Error de autenticación: Tu sesión ha expirado.");
+        } else {
+          alert(`❌ Error al eliminar paciente: ${data.error || "Error desconocido"}`);
+        }
+        return;
+      }
+
+      alert("✅ Paciente eliminado con éxito");
+      // if deleting currently edited item, cancel edit
+      if (editingIndex === index) cancelEdit();
+      // adjust selectedIndex if needed
+      setSelectedIndex((prev) => {
+        if (index === prev) return null;
+        if (index < prev) return prev - 1;
+        return prev;
+      });
+      cargarPacientes();
+    } catch (err) {
+      console.error("Error eliminando paciente:", err);
+      alert("❌ Error de conexión: No se pudo conectar con el servidor.");
+    }
   };
 
   // Detail / historia edit
@@ -170,61 +311,7 @@ function Pacientes() {
     setProximaEditing(false);
   };
 
-  // Actividad clínica state (formularios) y lógica
-  const [filterDate, setFilterDate] = useState("");
-  const [newActTitulo, setNewActTitulo] = useState("");
-  const [newActFecha, setNewActFecha] = useState("");
-  const [newActNotas, setNewActNotas] = useState("");
-
-  const [editingActIndex, setEditingActIndex] = useState(null);
-  const [editActTitulo, setEditActTitulo] = useState("");
-  const [editActFecha, setEditActFecha] = useState("");
-  const [editActNotas, setEditActNotas] = useState("");
-
-  const nextActivityId = () => Math.floor(Math.random() * 1000000);
-
-  const handleAddActivity = (e) => {
-    e.preventDefault();
-    if (selectedIndex === null || !newActTitulo.trim()) return;
-    setPacientes((prev) => prev.map((p, i) => i === selectedIndex ? { ...p, actividad: [...(p.actividad || []), { id: nextActivityId(), titulo: newActTitulo.trim(), fecha: newActFecha || null, notas: newActNotas.trim() }] } : p));
-    setNewActTitulo("");
-    setNewActFecha("");
-    setNewActNotas("");
-  };
-
-  const startEditActivity = (index) => {
-    const acts = pacientes[selectedIndex]?.actividad || [];
-    const a = acts[index];
-    if (!a) return;
-    setEditingActIndex(index);
-    setEditActTitulo(a.titulo || "");
-    setEditActFecha(a.fecha || "");
-    setEditActNotas(a.notas || "");
-  };
-
-  const cancelEditActivity = () => {
-    setEditingActIndex(null);
-    setEditActTitulo("");
-    setEditActFecha("");
-    setEditActNotas("");
-  };
-
-  const saveEditActivity = (e) => {
-    e.preventDefault();
-    if (selectedIndex === null || editingActIndex === null) return;
-    setPacientes((prev) => prev.map((p, i) => {
-      if (i !== selectedIndex) return p;
-      const actividad = (p.actividad || []).map((act, idx) => idx === editingActIndex ? { ...act, titulo: editActTitulo, fecha: editActFecha, notas: editActNotas } : act);
-      return { ...p, actividad };
-    }));
-    cancelEditActivity();
-  };
-
-  const deleteActivity = (index) => {
-    if (selectedIndex === null) return;
-    setPacientes((prev) => prev.map((p, i) => i === selectedIndex ? { ...p, actividad: (p.actividad || []).filter((_, idx) => idx !== index) } : p));
-    if (editingActIndex === index) cancelEditActivity();
-  };
+  // Actividad clínica state (formularios) y lógica - REMOVED for now (unused)
 
   return (
     <div className="pacientes-container">
@@ -234,6 +321,18 @@ function Pacientes() {
       <div className="contenido">
         <div className="lista-pacientes">
           <h2>PACIENTES</h2>
+
+          {error && (
+            <div className="alert alert-warning" style={{ marginBottom: '1rem' }}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '1rem' }}>
+              Cargando pacientes...
+            </div>
+          )}
 
           {/* Form: Agregar paciente */}
           <form className="agregar-paciente-form" onSubmit={handleAdd} style={{ marginBottom: '1rem' }}>
